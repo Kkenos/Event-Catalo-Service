@@ -17,5 +17,15 @@ public class PriceService {
             throw new IllegalArgumentException("Price amount cannot be negative");
         }
         Long eventId = price.getEvent().getId();
+        Venue venue = price.getEvent().getVenue();
+        Integer currentSum = priceRepository.sumTotalQuantityByEventId(eventId);
+
+        int totalAllocated = (currentSum != null) ? currentSum : 0;
+
+        if(totalAllocated + price.getTotalQuantity() > venue.getCapacity()) {
+            throw new IllegalArgumentException("Ошибка: В зале всего " + venue.getCapacity() +
+                    " мест. Вы пытаетесь распределить уже " + (totalAllocated + price.getTotalQuantity()));
+        }
+        priceRepository.save(price);
     }
 }
