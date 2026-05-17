@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PriceRepository extends JpaRepository<Price,Long> {
-    @Query("SELECT SUM(p.totalQuantity) FROM Price p WHERE p.event.id = :eventId")
+    @Query("SELECT SUM(p.totalQuantity) FROM Price p WHERE p.event.id = :eventId AND p.isActive = true")
     Integer sumTotalQuantityByEventId(Long eventId);
 
 

@@ -16,6 +16,7 @@ import java.util.List;
 @Service
 public class EventService {
     private EventRepository eventRepository;
+
     public EventService(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
     }
@@ -73,12 +74,13 @@ public class EventService {
     }
 
     public Page<Event> getAllEventsByEventDateBetween(LocalDateTime start, LocalDateTime end, int page, int size) {
-        if(start.isAfter(end)) {
+        if (start.isAfter(end)) {
             throw new IllegalArgumentException("Начало не может быть после конца");
         }
         Pageable pageable = PageRequest.of(page, size, Sort.by("startTime").descending());
-        return eventRepository.findAllByEventDateBetween(start,end,pageable);
+        return eventRepository.findAllByEventDateBetween(start, end, pageable);
     }
+
     public Page<Event> getEventByName(String eventName, Pageable pageable) {
         return eventRepository.findByEventName(eventName, pageable);
     }

@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 
-public interface VenueRepository extends JpaRepository<Venue,Long> {
+public interface VenueRepository extends JpaRepository<Venue, Long> {
 
     List<Event> findByVenueStatus(String venueStatus);
 }

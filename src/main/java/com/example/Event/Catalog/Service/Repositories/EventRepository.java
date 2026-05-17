@@ -12,9 +12,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface EventRepository extends JpaRepository<Event,Long> {
+public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findAllByStatus(String status);
+
     Page<Event> findAllByEventDateBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+
     Page<Event> findByEventName(String eventName, Pageable pageable);
 }

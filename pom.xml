@@ -8,6 +8,7 @@
 		<version>4.0.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+
 	<groupId>com.example</groupId>
 	<artifactId>Event-Catalog-Service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
@@ -26,9 +27,9 @@
 		<tag/>
 		<url/>
 	</scm>
-	<properties>
-		<java.version>25</java.version>
-	</properties>
+    <properties>
+        <java.version>25</java.version>
+    </properties>
 	<dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
