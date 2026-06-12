@@ -6,6 +6,8 @@ import com.example.Event.Catalog.Service.Repositories.EventRepository;
 import com.example.Event.Catalog.Service.Repositories.VenueRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class VenueService {
     private VenueRepository venueRepository;
@@ -16,7 +18,7 @@ public class VenueService {
         this.eventRepository = eventRepository;
     }
 
-    public void CreateVenue(Venue venue) {
+    public Venue CreateVenue(Venue venue) {
         if (!venue.getCity().matches("^[a-zA-Zа-яА-ЯёЁ\\\\s-]+$")) {
             throw new IllegalArgumentException("Содержит недопустимые символы!");
         }
@@ -26,19 +28,19 @@ public class VenueService {
         if (venue.getCapacity() < 0) {
             throw new IllegalArgumentException("Вместимость не может быть меньше или равно 0!");
         } else {
-            venue.setStatus("ACTIVE");
-            venueRepository.save(venue);
+            venue.setVenueStatus("ACTIVE");
+            return venueRepository.save(venue);
         }
     }
 
     public void DeleteVenue(long venueId) {
         Venue currentPlace = venueRepository.findById(venueId).orElseThrow(() -> new IllegalArgumentException("такого мета нет!"));
-        currentPlace.setStatus("DELETED");
+        currentPlace.setVenueStatus("DELETED");
         venueRepository.save(currentPlace);
     }
 
     public void UpdateVenue(Venue venue) {
-        Venue currentPlace = venueRepository.findById(venue.getVenueId()).orElseThrow(() -> new IllegalArgumentException("такого мета нет!"));
+        Venue currentPlace = venueRepository.findById(venue.getId()).orElseThrow(() -> new IllegalArgumentException("такого мета нет!"));
         if (currentPlace.getCapacity() > 0) {
             currentPlace.setCapacity(currentPlace.getCapacity());
         }
@@ -57,5 +59,8 @@ public class VenueService {
         }
         return event.getVenue();
     }
-
+    public List<Venue> getAllVenues(){
+        List<Venue> venues = venueRepository.findAll();
+        return venues;
+    }
 }

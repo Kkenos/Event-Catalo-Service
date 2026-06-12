@@ -16,7 +16,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findAllByStatus(String status);
 
-    Page<Event> findAllByEventDateBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+    Page<Event> findAllByStartTimeGreaterThanEqualAndEndTimeLessThanEqual(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
-    Page<Event> findByEventName(String eventName, Pageable pageable);
+    Page<Event> findByNameEventContainingIgnoreCase(String nameEvent, Pageable pageable);
 }

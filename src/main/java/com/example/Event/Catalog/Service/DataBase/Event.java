@@ -1,8 +1,13 @@
 package com.example.Event.Catalog.Service.DataBase;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+
+import javax.xml.catalog.Catalog;
 
 @Entity
 @Data
@@ -10,11 +15,9 @@ import lombok.Data;
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     @Column(nullable = false)
     private String nameEvent;
-    @Column(nullable = false)
-    private LocalDateTime date;
     private String description;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -24,5 +27,7 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "idVenue")
     private Venue venue;
-
+    @OneToMany(mappedBy = "event", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<Price> prices;
 }

@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Афиша Мероприятий</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --yellow: #FFE500;
+            --bg: #0A0A0A;
+            --surface: #141414;
+            --surface2: #1C1C1C;
+            --border: rgba(255,255,255,0.07);
+            --text: #F0F0F0;
+            --muted: #5A5A5A;
+            --danger: #FF3B3B;
+            --danger-bg: rgba(255,59,59,0.12);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* === NOISE OVERLAY === */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.5;
+        }
+
+        /* === AMBIENT GLOW === */
+        .ambient {
+            position: fixed;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 500px;
+            background: radial-gradient(ellipse, rgba(255,229,0,0.055) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientPulse 7s ease-in-out infinite;
+        }
+
+        @keyframes ambientPulse {
+            0%,100% { opacity: 0.5; transform: translateX(-50%) scaleX(1); }
+            50%      { opacity: 1;   transform: translateX(-50%) scaleX(1.08); }
+        }
+
+        /* === HEADER === */
+        .header {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 40px 40px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
+            animation: slideDown 0.8s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-left {}
+
+        .header-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--yellow);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-eyebrow::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 2px;
+            background: var(--yellow);
+        }
+
+        .header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(48px, 7vw, 88px);
+            line-height: 0.95;
+            letter-spacing: 0.02em;
+        }
+
+        .header h1 span { color: var(--yellow); }
+
+        /* Add event button */
+        .create-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--yellow);
+            color: #000;
+            text-decoration: none;
+            padding: 16px 28px;
+            border-radius: 14px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .create-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255,229,0,0.28);
+        }
+
+        .create-btn:active { transform: translateY(0); box-shadow: none; }
+
+        .create-btn svg { transition: transform 0.25s; }
+        .create-btn:hover svg { transform: rotate(90deg); }
+
+        /* Header divider */
+        .header-rule {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            padding: 0 40px;
+            animation: slideDown 0.8s cubic-bezier(0.16,1,0.3,1) 0.05s both;
+        }
+
+        .header-rule hr {
+            border: none;
+            border-top: 1px solid var(--border);
+        }
+
+        /* === STREAMING_CHUNK: Styling the search bar... === */
+        /* === SEARCH BAR === */
+        .search-section {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto 24px;
+            padding: 0 40px;
+            animation: slideDown 0.8s cubic-bezier(0.16,1,0.3,1) 0.06s both;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 4px 18px;
+            transition: border-color 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s cubic-bezier(0.16,1,0.3,1), transform 0.3s;
+        }
+
+        .search-box:focus-within {
+            border-color: var(--yellow);
+            box-shadow: 0 10px 30px rgba(255,229,0,0.06);
+            transform: translateY(-1px);
+        }
+
+        .search-icon {
+            color: var(--muted);
+            transition: color 0.3s;
+            margin-right: 14px;
+            flex-shrink: 0;
+        }
+
+        .search-box:focus-within .search-icon {
+            color: var(--yellow);
+        }
+
+        .search-box input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'Manrope', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 14px 0;
+        }
+
+        .search-box input::placeholder {
+            color: var(--muted);
+            transition: color 0.2s;
+        }
+
+        .search-box:focus-within input::placeholder {
+            color: #888;
+        }
+
+        .clear-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 6px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: color 0.2s, background-color 0.2s, transform 0.2s;
+            margin-left: 10px;
+        }
+
+        .clear-btn:hover {
+            color: var(--text);
+            background-color: rgba(255,255,255,0.06);
+            transform: scale(1.05);
+        }
+
+        .clear-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* === RESULTS META === */
+        .results-meta {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto 24px;
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideDown 0.8s cubic-bezier(0.16,1,0.3,1) 0.08s both;
+        }
+
+        .results-count {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .results-count strong { color: var(--text); }
+
+        /* === GRID === */
+        #eventsContainer {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px 80px;
+        }
+
+        /* === CARD === */
+        .event-card {
+            background: var(--surface);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.4s;
+            animation: cardReveal 0.6s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        @keyframes cardReveal {
+            from { opacity: 0; transform: translateY(40px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0)   scale(1); }
+        }
+
+        .event-card:nth-child(1) { animation-delay: 0.00s; }
+        .event-card:nth-child(2) { animation-delay: 0.05s; }
+        .event-card:nth-child(3) { animation-delay: 0.10s; }
+        .event-card:nth-child(4) { animation-delay: 0.15s; }
+        .event-card:nth-child(5) { animation-delay: 0.20s; }
+        .event-card:nth-child(6) { animation-delay: 0.25s; }
+        .event-card:nth-child(7) { animation-delay: 0.30s; }
+        .event-card:nth-child(8) { animation-delay: 0.35s; }
+        .event-card:nth-child(9) { animation-delay: 0.40s; }
+
+        .event-card:hover { border-color: rgba(255,229,0,0.2); }
+
+        /* Yellow glow on hover */
+        .event-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(255,229,0,0.12), transparent 55%);
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .event-card:hover::before { opacity: 1; }
+
+        /* Card removing animation */
+        .event-card.removing {
+            animation: cardRemove 0.45s cubic-bezier(0.55,0,1,0.45) forwards !important;
+        }
+
+        @keyframes cardRemove {
+            0%   { opacity: 1; transform: scale(1)     translateY(0);   filter: blur(0px); }
+            30%  { opacity: 1; transform: scale(1.02)  translateY(-4px); filter: blur(0px); }
+            100% { opacity: 0; transform: scale(0.88)  translateY(12px); filter: blur(4px); }
+        }
+
+        /* === POSTER === */
+        .poster-wrapper {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            overflow: hidden;
+        }
+
+        .poster-bg {
+            position: absolute;
+            inset: 0;
+        }
+
+        .grad-0 { background: linear-gradient(135deg, #1a0533 0%, #4a1060 50%, #050008 100%); }
+        .grad-1 { background: linear-gradient(135deg, #001a2e 0%, #003d6b 50%, #000610 100%); }
+        .grad-2 { background: linear-gradient(135deg, #1a1500 0%, #4a3800 50%, #0a0a00 100%); }
+        .grad-3 { background: linear-gradient(135deg, #001a10 0%, #00512f 50%, #000a00 100%); }
+        .grad-4 { background: linear-gradient(135deg, #1a0010 0%, #4a0030 50%, #0a0005 100%); }
+        .grad-5 { background: linear-gradient(135deg, #0d1a00 0%, #2e4d00 50%, #040800 100%); }
+
+        .wave-deco {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            z-index: 1;
+            opacity: 0.15;
+        }
+
+        .poster-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.7s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        .event-card:hover .poster-img { transform: scale(1.06); }
+
+        .poster-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                transparent 30%,
+                rgba(0,0,0,0.3) 65%,
+                rgba(10,10,10,0.88) 100%
+            );
+            z-index: 2;
+        }
+
+        /* === DATE BADGE === */
+        .date-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: var(--yellow);
+            color: #000;
+            border-radius: 12px;
+            padding: 10px 13px;
+            text-align: center;
+            z-index: 4;
+            line-height: 1;
+            box-shadow: 0 4px 18px rgba(255,229,0,0.32);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .event-card:hover .date-badge { transform: scale(1.07) rotate(2deg); }
+
+        .date-badge .month {
+            display: block;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            opacity: 0.65;
+            margin-bottom: 3px;
+        }
+
+        .date-badge .day {
+            display: block;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px;
+            letter-spacing: 0.02em;
+        }
+
+        .date-badge .dow {
+            display: block;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.55;
+            margin-top: 2px;
+        }
+
+        /* === GENRE TAG === */
+        .genre-tag {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            color: rgba(255,255,255,0.85);
+            border-radius: 100px;
+            padding: 5px 14px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            z-index: 4;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* === DELETE BUTTON === */
+        .delete-btn {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 5;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--danger-bg);
+            border: 1px solid rgba(255,59,59,0.25);
+            color: var(--danger);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+            opacity: 0;
+            transform: scale(0.75);
+            backdrop-filter: blur(8px);
+        }
+
+        .event-card:hover .delete-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .delete-btn:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: #fff;
+            transform: scale(1.12) !important;
+            box-shadow: 0 4px 16px rgba(255,59,59,0.35);
+        }
+
+        .delete-btn:active { transform: scale(0.96) !important; }
+
+        .delete-btn svg { pointer-events: none; }
+
+        /* === PERFORATION === */
+        .perforation {
+            position: relative;
+            height: 0;
+            z-index: 3;
+        }
+
+        .perforation::before, .perforation::after {
+            content: '';
+            position: absolute;
+            top: -12px;
+            width: 24px;
+            height: 24px;
+            background: var(--bg);
+            border-radius: 50%;
+            z-index: 4;
+        }
+
+        .perforation::before { left: -12px; }
+        .perforation::after  { right: -12px; }
+
+        .perf-line {
+            position: absolute;
+            top: -1px;
+            left: 12px;
+            right: 12px;
+            height: 1px;
+            background: repeating-linear-gradient(
+                to right,
+                var(--border) 0,
+                var(--border) 8px,
+                transparent 8px,
+                transparent 16px
+            );
+        }
+
+        /* === CARD CONTENT === */
+        .card-content {
+            padding: 22px 22px 20px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .event-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.3s;
+        }
+
+        .event-card:hover .event-title { color: #fff; }
+
+        .event-venue {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+
+        .meta-dot {
+            width: 3px;
+            height: 3px;
+            background: var(--muted);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .card-footer {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .price-wrap {}
+
+        .price-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 2px;
+        }
+
+        .price-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px;
+            letter-spacing: 0.03em;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .price-value .currency {
+            font-family: 'Manrope', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--muted);
+            margin-left: 2px;
+        }
+
+        /* Buy button */
+        .buy-btn {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 11px 20px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.02em;
+        }
+
+        .buy-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--yellow);
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            z-index: 0;
+        }
+
+        .buy-btn .btn-text {
+            position: relative;
+            z-index: 1;
+            transition: color 0.25s;
+        }
+
+        .event-card:hover .buy-btn {
+            border-color: var(--yellow);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255,229,0,0.18);
+        }
+
+        .event-card:hover .buy-btn::before { transform: translateY(0); }
+        .event-card:hover .buy-btn .btn-text { color: #000; }
+
+        /* === SKELETON === */
+        .event-card.skeleton .poster-wrapper {
+            background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-line {
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--surface2) 25%, #222 50%, var(--surface2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* === EMPTY / ERROR STATES === */
+        .state-box {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            gap: 18px;
+            animation: fadeIn 0.5s ease both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .state-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .state-title {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .state-sub {
+            font-size: 13px;
+            color: var(--muted);
+            text-align: center;
+            max-width: 280px;
+            line-height: 1.6;
+        }
+
+        .state-box.error .state-title { color: var(--danger); }
+
+        /* === CONFIRM MODAL === */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.72);
+            backdrop-filter: blur(6px);
+            z-index: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInBg 0.25s ease both;
+        }
+
+        @keyframes fadeInBg {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 400px;
+            width: calc(100% - 48px);
+            box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+            animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.88) translateY(20px); }
+            to   { opacity: 1; transform: scale(1)    translateY(0); }
+        }
+
+        .modal-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--danger-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-icon svg { color: var(--danger); }
+
+        .modal h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .modal p {
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .modal p strong { color: var(--text); }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-cancel {
+            flex: 1;
+            padding: 13px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .modal-cancel:hover { background: var(--surface2); border-color: rgba(255,255,255,0.15); }
+
+        .modal-confirm {
+            flex: 1;
+            padding: 13px;
+            background: var(--danger);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .modal-confirm:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(255,59,59,0.3);
+        }
+
+        .modal-confirm:active { transform: translateY(0); }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            z-index: 950;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+            transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s;
+            white-space: nowrap;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.hide { transform: translateX(-50%) translateY(80px); opacity: 0; }
+
+        .toast-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            flex-shrink: 0;
+        }
+
+        .toast-dot.red { background: var(--danger); }
+    </style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<header class="header">
+    <div class="header-left">
+        <div class="header-eyebrow">Управление</div>
+        <h1>ПРЕДСТОЯЩИЕ <span>СОБЫТИЯ</span></h1>
+    </div>
+    <a href="/create.html" class="create-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Создать событие
+    </a>
+</header>
+
+<div class="header-rule"><hr></div>
+
+<!-- === NEW SEARCH BAR SECTION === -->
+<div class="search-section">
+    <div class="search-box">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Поиск по названию события..." autocomplete="off">
+        <button id="clearSearch" class="clear-btn" title="Очистить поиск" aria-label="Очистить">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<div class="results-meta">
+    <div class="results-count" id="results-count"></div>
+</div>
+
+<div id="eventsContainer"></div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-backdrop" id="modal" style="display:none">
+    <div class="modal">
+        <div class="modal-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+            </svg>
+        </div>
+        <h3>Удалить событие?</h3>
+        <p>Вы уверены, что хотите безвозвратно удалить <strong id="modal-event-name"></strong>? Это действие нельзя отменить.</p>
+        <div class="modal-actions">
+            <button class="modal-cancel" id="modal-cancel">Отмена</button>
+            <button class="modal-confirm" id="modal-confirm">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+    <span class="toast-dot" id="toast-dot"></span>
+    <span id="toast-text"></span>
+</div>
+
+<script>
+    const container     = document.getElementById('eventsContainer');
+    const resultsCount  = document.getElementById('results-count');
+    const modal         = document.getElementById('modal');
+    const modalName     = document.getElementById('modal-event-name');
+    const modalCancel   = document.getElementById('modal-cancel');
+    const modalConfirm  = document.getElementById('modal-confirm');
+    const toast         = document.getElementById('toast');
+    const toastText     = document.getElementById('toast-text');
+    const toastDot      = document.getElementById('toast-dot');
+
+    // Search elements
+    const searchInput   = document.getElementById('searchInput');
+    const clearSearch   = document.getElementById('clearSearch');
+
+    let allEvents = [];       // In-memory array to support instant client-side search filtering
+    let pendingDelete = null; // { id, card, name }
+    let toastTimer;
+
+    // ── Toast ─────────────────────────────────────────────────────────
+    function showToast(msg, isError = false) {
+        toastText.textContent = msg;
+        toastDot.className = 'toast-dot' + (isError ? ' red' : '');
+        toast.classList.remove('hide');
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+        }, 3000);
+    }
+
+    // ── Modal ─────────────────────────────────────────────────────────
+    function openModal(event, card) {
+        pendingDelete = { id: event.id, card, name: event.nameEvent || 'событие' };
+        modalName.textContent = `«${event.nameEvent}»`;
+        modal.style.display = 'flex';
+    }
+
+    modalCancel.addEventListener('click', () => {
+        modal.style.display = 'none';
+        pendingDelete = null;
+    });
+
+    modal.addEventListener('click', e => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+            pendingDelete = null;
+        }
+    });
+
+    modalConfirm.addEventListener('click', () => {
+        if (!pendingDelete) return;
+        const { id, card, name } = pendingDelete;
+        modal.style.display = 'none';
+        pendingDelete = null;
+        deleteEvent(id, card, name);
+    });
+
+    // ── Skeleton ──────────────────────────────────────────────────────
+    function showSkeletons(n = 6) {
+        container.innerHTML = '';
+        for (let i = 0; i < n; i++) {
+            const sk = document.createElement('div');
+            sk.className = 'event-card skeleton';
+            sk.style.animationDelay = (i * 0.05) + 's';
+            sk.innerHTML = `
+                <div class="poster-wrapper"></div>
+                <div class="perforation"><div class="perf-line"></div></div>
+                <div class="card-content">
+                    <div class="skeleton-line" style="height:20px;width:75%;margin-bottom:10px"></div>
+                    <div class="skeleton-line" style="height:14px;width:50%;margin-bottom:20px"></div>
+                    <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;justify-content:space-between;align-items:center">
+                        <div class="skeleton-line" style="height:26px;width:80px"></div>
+                        <div class="skeleton-line" style="height:38px;width:96px;border-radius:12px"></div>
+                    </div>
+                </div>`;
+            container.appendChild(sk);
+        }
+    }
+
+    // ── Date helpers ──────────────────────────────────────────────────
+    function formatDate(ds) {
+        if (!ds) return { day: '—', month: '—', dow: '—' };
+        const d = new Date(ds);
+        return {
+            day:   d.getDate(),
+            month: d.toLocaleString('ru-RU', {month:'short'}).replace('.','').toUpperCase(),
+            dow:   d.toLocaleString('ru-RU', {weekday:'short'}).toUpperCase()
+        };
+    }
+
+    // ── Build card ────────────────────────────────────────────────────
+    const gradients = ['grad-0','grad-1','grad-2','grad-3','grad-4','grad-5'];
+
+    function buildCard(event, idx) {
+        const { day, month, dow } = formatDate(event.startTime || event.date);
+        const grad    = gradients[idx % gradients.length];
+        const title   = event.nameEvent || 'Без названия';
+        const genre   = event.genre || 'Концерт';
+        const venue   = event.venue ? event.venue.name : 'Онлайн';
+        const city    = event.venue ? event.venue.city || 'Москва' : '';
+        const imgSrc  = event.imageUrl || '';
+
+        let priceText = '0';
+        let priceCurrency = '₽';
+        const minP = event.minPrice ?? (event.prices?.length ? Math.min(...event.prices.map(p => p.priceAmount)) : 0);
+        if (minP === 0) { priceText = 'FREE'; priceCurrency = ''; }
+        else priceText = `от ${minP.toLocaleString('ru-RU')}`;
+
+        const posterContent = imgSrc
+            ? `<img class="poster-img" src="${imgSrc}" alt="${title}" loading="lazy">`
+            : `<div class="poster-bg ${grad}">
+                 <svg class="wave-deco" viewBox="0 0 400 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                   <path d="M0 35 Q25 8 50 35 Q75 62 100 35 Q125 8 150 35 Q175 62 200 35 Q225 8 250 35 Q275 62 300 35 Q325 8 350 35 Q375 62 400 35" stroke="white" stroke-width="2" fill="none"/>
+                   <path d="M0 50 Q25 25 50 50 Q75 75 100 50 Q125 25 150 50 Q175 75 200 50 Q225 25 250 50 Q275 75 300 50 Q325 25 350 50 Q375 75 400 50" stroke="white" stroke-width="1" fill="none" opacity="0.5"/>
+                 </svg>
+               </div>`;
+
+        const card = document.createElement('div');
+        card.className = 'event-card';
+        card.style.animationDelay = Math.min(idx * 0.05, 0.4) + 's';
+        card.innerHTML = `
+            <div class="poster-wrapper">
+                ${posterContent}
+                <div class="poster-overlay"></div>
+                <div class="date-badge">
+                    <span class="month">${month}</span>
+                    <span class="day">${day}</span>
+                    <span class="dow">${dow}</span>
+                </div>
+                <div class="genre-tag">${genre}</div>
+                <button class="delete-btn" title="Удалить событие" aria-label="Удалить">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="perforation"><div class="perf-line"></div></div>
+            <div class="card-content">
+                <h3 class="event-title" title="${title}">${title}</h3>
+                <div class="event-venue">
+                    ${city ? `<span>${city}</span><span class="meta-dot"></span>` : ''}
+                    <span>${venue}</span>
+                </div>
+                <div class="card-footer">
+                    <div class="price-wrap">
+                        <div class="price-label">Билеты</div>
+                        <div class="price-value">${priceText}<span class="currency">${priceCurrency}</span></div>
+                    </div>
+                    <button class="buy-btn"><span class="btn-text">Купить →</span></button>
+                </div>
+            </div>`;
+
+        card.querySelector('.delete-btn').addEventListener('click', e => {
+            e.stopPropagation();
+            openModal(event, card);
+        });
+
+        return card;
+    }
+
+    // ── Update Count with Russian Pluralization ──────────────────────
+    function getRussianPlural(n) {
+        const mod10 = n % 10;
+        const mod100 = n % 100;
+        if (mod10 === 1 && mod100 !== 11) {
+            return 'событие';
+        } else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+            return 'события';
+        } else {
+            return 'событий';
+        }
+    }
+
+    function updateCount(n) {
+        if (n === 0) {
+            resultsCount.innerHTML = '';
+            return;
+        }
+        resultsCount.innerHTML = `Найдено <strong>${n}</strong> ${getRussianPlural(n)}`;
+    }
+
+    // ── Search & Filter Logic ─────────────────────────────────────────
+    function filterAndRenderEvents() {
+        const query = searchInput.value.trim().toLowerCase();
+        
+        // Filter events on-the-fly
+        const filtered = allEvents.filter(ev => {
+            const title = (ev.nameEvent || '').toLowerCase();
+            return title.includes(query);
+        });
+
+        container.innerHTML = '';
+
+        // Handle clean button visibility
+        clearSearch.style.display = query.length > 0 ? 'flex' : 'none';
+
+        if (allEvents.length === 0) {
+            container.innerHTML = `
+                <div class="state-box">
+                    <div class="state-icon">🎵</div>
+                    <div class="state-title">Афиша пуста</div>
+                    <div class="state-sub">Создайте первое событие, чтобы оно появилось здесь.</div>
+                </div>`;
+            updateCount(0);
+            return;
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="state-box">
+                    <div class="state-icon">🔍</div>
+                    <div class="state-title">Ничего не найдено</div>
+                    <div class="state-sub">По запросу «<strong>${searchInput.value}</strong>» событий не найдено. Попробуйте другой запрос.</div>
+                </div>`;
+            updateCount(0);
+            return;
+        }
+
+        // Render matching cards
+        filtered.forEach((ev, i) => container.appendChild(buildCard(ev, i)));
+        updateCount(filtered.length);
+    }
+
+    // Input event listeners
+    searchInput.addEventListener('input', filterAndRenderEvents);
+    clearSearch.addEventListener('click', () => {
+        searchInput.value = '';
+        searchInput.focus();
+        filterAndRenderEvents();
+    });
+
+    // ── Load events ───────────────────────────────────────────────────
+    function loadEvents() {
+        showSkeletons(6);
+        resultsCount.innerHTML = '';
+
+        fetch('/api/events/allEvents')
+            .then(r => r.json())
+            .then(events => {
+                allEvents = events || [];
+                filterAndRenderEvents();
+            })
+            .catch(() => {
+                container.innerHTML = `
+                    <div class="state-box error">
+                        <div class="state-icon">⚡</div>
+                        <div class="state-title">Ошибка соединения</div>
+                        <div class="state-sub">Не удалось загрузить события. Проверьте подключение к бэкенду.</div>
+                    </div>`;
+                resultsCount.innerHTML = '';
+            });
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────
+    function deleteEvent(id, card, name) {
+        card.classList.add('removing');
+
+        fetch(`/api/events/delete/${id}`, { method: 'DELETE' })
+            .then(res => {
+                if (res.ok) {
+                    setTimeout(() => {
+                        // Remove from original in-memory source
+                        allEvents = allEvents.filter(ev => ev.id !== id);
+                        card.remove();
+                        filterAndRenderEvents();
+                    }, 450);
+                    showToast(`«${name}» удалено`);
+                } else {
+                    card.classList.remove('removing');
+                    showToast('Не удалось удалить событие', true);
+                }
+            })
+            .catch(() => {
+                card.classList.remove('removing');
+                showToast('Ошибка соединения', true);
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadEvents);
+</script>
+</body>
+</html>

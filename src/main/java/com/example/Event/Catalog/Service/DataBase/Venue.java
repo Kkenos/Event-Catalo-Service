@@ -9,11 +9,11 @@ import lombok.Data;
 public class Venue {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long venueId;
+    private Long id;
     private String name;
     private String address;
     private String city;
     private int capacity;
     private String typeOfPlace;
-    private String status;
+    private String venueStatus;
 }

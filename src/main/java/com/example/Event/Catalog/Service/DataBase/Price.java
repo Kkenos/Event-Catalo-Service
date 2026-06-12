@@ -1,6 +1,8 @@
 package com.example.Event.Catalog.Service.DataBase;
 
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,9 +12,10 @@ import lombok.Data;
 public class Price {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
     private String tier;
     private int priceAmount;
+    @Column(columnDefinition = "varchar(255) default 'RUB'")
     private final String currency = "RUB";
     private int availableQuantity;
     private int totalQuantity;
@@ -20,5 +23,6 @@ public class Price {
 
     @ManyToOne
     @JoinColumn(name = "eventId")
+    @JsonBackReference
     private Event event;
 }

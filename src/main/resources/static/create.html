@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание Мероприятия — Панель управления</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --card-bg: #141414;
+            --input-bg: #1a1a1a;
+            --border-color: #262626;
+            --text-color: #ffffff;
+            --text-muted: #8e8e8f;
+            --accent-color: #ffe600;
+            --accent-hover: #e6cf00;
+            --danger-color: #ff3333;
+            --success-color: #00cc66;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+        }
+
+        /* Кнопка назад */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text-color);
+        }
+
+        .back-link::before {
+            content: "←";
+            margin-right: 8px;
+        }
+
+        /* Заголовки шагов */
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h1 span {
+            color: var(--accent-color);
+        }
+
+        /* Стили контейнеров шагов */
+        .step-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 35px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .step-disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            transform: scale(0.98);
+        }
+
+        /* Формы и поля */
+        .form-group {
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        input, select, textarea {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 16px;
+            font-size: 1rem;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(255, 230, 0, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Кастомный селект с кнопкой добавления новой площадки */
+        .select-with-btn {
+            display: flex;
+            gap: 12px;
+        }
+
+        .add-venue-inline-btn {
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            width: 54px;
+            height: 54px;
+            font-size: 1.5rem;
+            font-weight: 300;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-venue-inline-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background-color: #1e1e1e;
+        }
+
+        /* Кнопки */
+        .submit-btn {
+            background-color: var(--accent-color);
+            color: #000000;
+            border: none;
+            padding: 18px;
+            font-size: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .submit-btn:disabled {
+            background-color: #333333;
+            color: #666666;
+            cursor: not-allowed;
+        }
+
+        /* Сообщения об ошибках и успехе */
+        .message {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .message.error {
+            background-color: rgba(255, 51, 51, 0.1);
+            border: 1px solid var(--danger-color);
+            color: #ff8080;
+            display: block;
+        }
+
+        .message.success {
+            background-color: rgba(0, 204, 102, 0.1);
+            border: 1px solid var(--success-color);
+            color: #80ffbf;
+            display: block;
+        }
+
+        /* Список добавленных тарифов */
+        .prices-list {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .price-tag-item {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .price-tag-item strong {
+            color: var(--accent-color);
+        }
+
+        /* Модальное окно создания новой площадки */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 35px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+            position: relative;
+            animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalFadeIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+            color: var(--text-color);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .modal-cancel-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            padding: 12px 20px;
+            border-radius: 8px;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .modal-cancel-btn:hover {
+            color: var(--text-color);
+            background-color: rgba(255,255,255,0.05);
+        }
+
+        .modal-submit-btn {
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            font-weight: 800;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .modal-submit-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .modal-submit-btn:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Ссылка на главную -->
+        <a href="/index.html" class="back-link">Назад к афише</a>
+
+        <!-- ================= ШАГ 1: СОБЫТИЕ ================= -->
+        <div class="step-container" id="step1Container">
+            <h1>Шаг 1: <span>Событие</span></h1>
+            
+            <!-- Сообщение об ошибке/успехе для Шага 1 -->
+            <div id="step1Msg" class="message"></div>
+
+            <form id="eventForm">
+                <div class="form-group">
+                    <label for="eventName">Название события</label>
+                    <input type="text" id="eventName" placeholder="Например: KaiAngel" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventVenue">Место проведения (Площадка)</label>
+                    <div class="select-with-btn">
+                        <select id="eventVenue" required>
+                            <option value="" disabled selected>-- Выберите площадку --</option>
+                        </select>
+                        <!-- Кнопка быстрого создания новой площадки -->
+                        <button type="button" id="openVenueModalBtn" class="add-venue-inline-btn" title="Создать новую площадку">+</button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startTime">Дата и время начала</label>
+                        <input type="datetime-local" id="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">Дата и время окончания</label>
+                        <input type="datetime-local" id="endTime" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventGenre">Жанр</label>
+                    <select id="eventGenre" required>
+                        <option value="" disabled selected>-- Выберите жанр --</option>
+                        <option value="Концерт">Концерт</option>
+                        <option value="Фестиваль">Фестиваль</option>
+                        <option value="Шоу">Шоу</option>
+                        <option value="Спектакль">Спектакль</option>
+                        <option value="Вечеринка">Вечеринка</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDescription">Описание</label>
+                    <textarea id="eventDescription" placeholder="Расскажите подробности о мероприятии..." required></textarea>
+                </div>
+
+                <button type="submit" id="eventSubmitBtn" class="submit-btn">Создать событие</button>
+            </form>
+        </div>
+
+
+        <!-- ================= ШАГ 2: КАТЕГОРИИ БИЛЕТОВ ================= -->
+        <div class="step-container step-disabled" id="step2Container">
+            <h1>Шаг 2: <span>Категории билетов</span></h1>
+
+            <!-- Сообщение об ошибке/успехе для Шага 2 -->
+            <div id="step2Msg" class="message"></div>
+
+            <form id="priceForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="priceTier">Название зоны (Tier)</label>
+                        <input type="text" id="priceTier" placeholder="Например: Танцпол, VIP" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="priceAmount">Цена (в ₽)</label>
+                        <input type="number" id="priceAmount" min="0" placeholder="3000" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="priceQuantity">Количество билетов</label>
+                    <input type="number" id="priceQuantity" min="1" placeholder="500" required>
+                </div>
+
+                <button type="submit" id="priceSubmitBtn" class="submit-btn">+ Добавить тариф</button>
+            </form>
+
+            <!-- Список уже добавленных тарифов к созданному событию -->
+            <div class="prices-list" id="pricesList" style="display: none;">
+                <!-- Сюда JS будет вставлять добавленные цены -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= МОДАЛЬНОЕ ОКНО СОЗДАНИЯ ПЛОЩАДКИ ================= -->
+    <div id="venueModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 class="modal-title">Создать площадку</h2>
+            
+            <!-- Сообщение внутри модалки -->
+            <div id="venueModalMsg" class="message"></div>
+
+            <form id="venueForm">
+                <div class="form-group">
+                    <label for="modalVenueName">Название площадки</label>
+                    <input type="text" id="modalVenueName" placeholder="Например: Ледовый Дворец" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="modalVenueCapacity">Вместимость (чел.)</label>
+                    <input type="number" id="modalVenueCapacity" min="1" placeholder="5000" required>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" id="closeVenueModalBtn" class="modal-cancel-btn">Отмена</button>
+                    <button type="submit" class="modal-submit-btn">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT ЛОГИКА СВЯЗКИ REST API ================= -->
+    <script>
+        // Идентификаторы шагов
+        let createdEventId = null;
+
+        // Элементы DOM
+        const step1Container = document.getElementById('step1Container');
+        const step2Container = document.getElementById('step2Container');
+        const eventForm = document.getElementById('eventForm');
+        const eventVenue = document.getElementById('eventVenue');
+        const eventSubmitBtn = document.getElementById('eventSubmitBtn');
+        const step1Msg = document.getElementById('step1Msg');
+
+        const priceForm = document.getElementById('priceForm');
+        const pricesList = document.getElementById('pricesList');
+        const step2Msg = document.getElementById('step2Msg');
+        const priceSubmitBtn = document.getElementById('priceSubmitBtn');
+
+        // Модалка
+        const venueModal = document.getElementById('venueModal');
+        const openVenueModalBtn = document.getElementById('openVenueModalBtn');
+        const closeVenueModalBtn = document.getElementById('closeVenueModalBtn');
+        const venueForm = document.getElementById('venueForm');
+        const venueModalMsg = document.getElementById('venueModalMsg');
+
+        // ================= ЗАГРУЗКА ПЛОЩАДОК ПРИ СТАРТЕ =================
+        function loadVenues() {
+            fetch('/api/venues')
+                .then(res => {
+                    if (!res.ok) throw new Error("Не удалось получить список площадок");
+                    return res.json();
+                })
+                .then(venues => {
+                    // Сохраняем выбранное значение, если оно было
+                    const selectedVal = eventVenue.value;
+                    
+                    // Очищаем селект, оставляем дефолтный неактивный пункт
+                    eventVenue.innerHTML = '<option value="" disabled selected>-- Выберите площадку --</option>';
+                    
+                    venues.forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = v.id; // Мапим ID с бэкенда (Long id)
+                        opt.textContent = `${v.name} (Вместимость: ${v.capacity})`;
+                        eventVenue.appendChild(opt);
+                    });
+
+                    // Восстанавливаем значение, если оно актуально
+                    if (selectedVal) {
+                        eventVenue.value = selectedVal;
+                    }
+                })
+                .catch(err => {
+                    showStep1Msg(err.message, 'error');
+                });
+        }
+
+        // ================= ЛОГИКА ДЛЯ МОДАЛКИ (НОВАЯ ПЛОЩАДКА) =================
+        openVenueModalBtn.addEventListener('click', () => {
+            venueModal.style.display = 'flex';
+            venueForm.reset();
+            venueModalMsg.style.display = 'none';
+        });
+
+        closeVenueModalBtn.addEventListener('click', () => {
+            venueModal.style.display = 'none';
+        });
+
+        // Закрытие при клике на темный фон вне карточки модалки
+        venueModal.addEventListener('click', (e) => {
+            if (e.target === venueModal) {
+                venueModal.style.display = 'none';
+            }
+        });
+
+        // Отправка формы новой площадки на бэкенд
+        venueForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            venueModalMsg.style.display = 'none';
+
+            const venueData = {
+                name: document.getElementById('modalVenueName').value.trim(),
+                capacity: parseInt(document.getElementById('modalVenueCapacity').value)
+            };
+
+            fetch('/api/venues/newVenue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(venueData)
+            })
+            .then(async res => {
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || 'Не удалось сохранить площадку на сервере');
+                }
+                return res.json();
+            })
+            .then(savedVenue => {
+                // Создаем новый пункт селекта
+                const opt = document.createElement('option');
+                opt.value = savedVenue.id;
+                opt.textContent = `${savedVenue.name} (Вместимость: ${savedVenue.capacity})`;
+                
+                // Добавляем в выпадающий список и делаем выбранным
+                eventVenue.appendChild(opt);
+                eventVenue.value = savedVenue.id;
+
+                // Закрываем модальное окно
+                venueModal.style.display = 'none';
+            })
+            .catch(err => {
+                venueModalMsg.className = 'message error';
+                venueModalMsg.textContent = err.message;
+                venueModalMsg.style.display = 'block';
+            });
+        });
+
+
+        // ================= ШАГ 1: ОТПРАВКА СОБЫТИЯ =================
+        eventForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            step1Msg.style.display = 'none';
+
+            // Собираем ISO строки дат с учетом таймзоны
+            const rawStart = document.getElementById('startTime').value;
+            const rawEnd = document.getElementById('endTime').value;
+
+            if (!rawStart || !rawEnd) {
+                showStep1Msg("Пожалуйста, заполните обе даты!", "error");
+                return;
+            }
+
+            // Переводим в формат ISO
+            const startISO = new Date(rawStart).toISOString();
+            const endISO = new Date(rawEnd).toISOString();
+
+            const eventData = {
+                nameEvent: document.getElementById('eventName').value.trim(),
+                startTime: startISO,
+                endTime: endISO,
+                genre: document.getElementById('eventGenre').value,
+                description: document.getElementById('eventDescription').value.trim(),
+                venue: {
+                    id: parseInt(eventVenue.value)
+                }
+            };
+
+            eventSubmitBtn.disabled = true;
+            eventSubmitBtn.textContent = 'Публикация...';
+
+            fetch('/api/events/createEvent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(eventData)
+            })
+            .then(async res => {
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(errText || "Сервер вернул ошибку: " + res.status);
+                }
+                return res.json();
+            })
+            .then(savedEvent => {
+                createdEventId = savedEvent.id; // Запоминаем ID события!
+                
+                showStep1Msg(`Событие успешно создано с ID: ${createdEventId}!`, 'success');
+                
+                // Блокируем Шаг 1 и разблокируем Шаг 2
+                disableFormInputs(eventForm);
+                eventSubmitBtn.style.display = 'none';
+                step2Container.classList.remove('step-disabled');
+            })
+            .catch(err => {
+                showStep1Msg("Ошибка создания события: " + err.message, 'error');
+                eventSubmitBtn.disabled = false;
+                eventSubmitBtn.textContent = 'Создать событие';
+            });
+        });
+
+
+        // ================= ШАГ 2: ДОБАВЛЕНИЕ БИЛЕТОВ =================
+        priceForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            step2Msg.style.display = 'none';
+
+            if (!createdEventId) {
+                showStep2Msg("Сначала необходимо создать событие в Шаге 1!", "error");
+                return;
+            }
+
+            const priceData = {
+                tier: document.getElementById('priceTier').value.trim(),
+                priceAmount: parseFloat(document.getElementById('priceAmount').value),
+                totalQuantity: parseInt(document.getElementById('priceQuantity').value),
+                event: {
+                    id: createdEventId
+                }
+            };
+
+            priceSubmitBtn.disabled = true;
+
+            // Отправляем на правильный эндпоинт контроллера
+            fetch('/api/prices/createPrice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(priceData)
+            })
+            .then(async res => {
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(errText || "Не удалось добавить тариф. Код: " + res.status);
+                }
+                return res.json();
+            })
+            .then(savedPrice => {
+                showStep2Msg(`Тариф "${savedPrice.tier}" успешно добавлен!`, 'success');
+                
+                // Отображаем добавленный тариф в списке ниже
+                pricesList.style.display = 'flex';
+                const item = document.createElement('div');
+                item.className = 'price-tag-item';
+                item.innerHTML = `
+                    <span>Зона: <strong>${savedPrice.tier}</strong></span>
+                    <span>Цена: ${savedPrice.priceAmount} ₽</span>
+                    <span>Мест: ${savedPrice.totalQuantity}</span>
+                `;
+                pricesList.appendChild(item);
+
+                // Очищаем только поля билетов
+                priceForm.reset();
+            })
+            .catch(err => {
+                showStep2Msg(err.message, 'error');
+            })
+            .finally(() => {
+                priceSubmitBtn.disabled = false;
+            });
+        });
+
+
+        // ================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =================
+        function showStep1Msg(text, type) {
+            step1Msg.className = `message ${type}`;
+            step1Msg.textContent = text;
+            step1Msg.style.display = 'block';
+        }
+
+        function showStep2Msg(text, type) {
+            step2Msg.className = `message ${type}`;
+            step2Msg.textContent = text;
+            step2Msg.style.display = 'block';
+        }
+
+        function disableFormInputs(formElement) {
+            const inputs = formElement.querySelectorAll('input, select, textarea, button:not(.submit-btn)');
+            inputs.forEach(el => el.disabled = true);
+        }
+
+        // Запуск инициализации площадок
+        document.addEventListener('DOMContentLoaded', loadVenues);
+    </script>
+</body>
+</html>
