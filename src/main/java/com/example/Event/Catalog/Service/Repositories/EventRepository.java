@@ -19,4 +19,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     Page<Event> findAllByStartTimeGreaterThanEqualAndEndTimeLessThanEqual(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
     Page<Event> findByNameEventContainingIgnoreCase(String nameEvent, Pageable pageable);
+
+    List<Event> findByVenueId(long venueId);
+
 }

@@ -28,15 +28,18 @@ public class VenueService {
         if (venue.getCapacity() < 0) {
             throw new IllegalArgumentException("Вместимость не может быть меньше или равно 0!");
         } else {
-            venue.setVenueStatus("ACTIVE");
             return venueRepository.save(venue);
         }
     }
 
     public void DeleteVenue(long venueId) {
-        Venue currentPlace = venueRepository.findById(venueId).orElseThrow(() -> new IllegalArgumentException("такого мета нет!"));
-        currentPlace.setVenueStatus("DELETED");
-        venueRepository.save(currentPlace);
+        List<Event> events = eventRepository.findByVenueId(venueId);
+        for (Event event : events){
+            event.setStatus("DELETED");
+        }
+        eventRepository.saveAll(events);
+        venueRepository.deleteById(venueId);
+
     }
 
     public void UpdateVenue(Venue venue) {

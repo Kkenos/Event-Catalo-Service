@@ -15,11 +15,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class EventService {
-    private EventRepository eventRepository;
-    private VenueRepository venueRepository;
+    private final EventRepository eventRepository;
+    private final VenueRepository venueRepository;
     public EventService(EventRepository eventRepository,VenueRepository venueRepository) {
         this.eventRepository = eventRepository;
         this.venueRepository = venueRepository;
@@ -96,5 +97,15 @@ public class EventService {
         //Раньше использовал обычный findByEventName, но так пользователю нужно было вводить полное имя
         // и еще в точь-в-точь! Благодаря Containing(который в SQL превратиться LIKE) можно искать по совпадению
         //IgnoreCase для того чтобы разницы в написании, к примеру, РОК,рок,Рок,рОк и т.п не было важно
+    }
+    public String converterNameFile(String photoURL){
+        int lastToken = photoURL.lastIndexOf(".");
+        if(lastToken == -1){
+            throw new IllegalArgumentException("У вашего файла нет расширения");
+        }
+        String photoName = photoURL.substring(lastToken);
+        String uuid = UUID.randomUUID().toString();
+        String result = uuid + photoName;
+        return result;
     }
 }

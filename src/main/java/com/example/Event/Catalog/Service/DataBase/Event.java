@@ -23,6 +23,7 @@ public class Event {
     private LocalDateTime endTime;
     private String status;
     private String createAt;
+    private String photoURL;
 
     @ManyToOne
     @JoinColumn(name = "idVenue")

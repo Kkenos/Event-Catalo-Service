@@ -33,4 +33,9 @@ public class VenueController {
         List<Venue> venues =  venueService.getAllVenues();
         return ResponseEntity.ok(venues);
     }
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Venue> deleteVenue(@PathVariable Long id){
+        venueService.DeleteVenue(id);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -12,5 +12,5 @@ import java.util.List;
 
 public interface VenueRepository extends JpaRepository<Venue, Long> {
 
-    List<Event> findByVenueStatus(String venueStatus);
+    List<Event> findByIsDeleted(String venueStatus);
 }
